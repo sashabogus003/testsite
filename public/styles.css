@@ -1,43 +1,159 @@
 :root {
-  --bg: #140d08;
-  --panel: #1f140d;
-  --text: #f6e9da;
-  --accent: #ffb347;
-  --border: #5f4022;
+  --bg: #120906;
+  --bg-soft: #1a0d07;
+  --panel: #231108;
+  --line: #6f471f;
+  --text: #f6e6d6;
+  --muted: #d7b189;
+  --gold: #f6b84e;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; font-family: Inter, system-ui, sans-serif; background: radial-gradient(circle at top, #2d1d11, var(--bg)); color: var(--text); }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--text);
+  background: radial-gradient(80% 40% at 50% 0%, #2a170d 0%, var(--bg) 60%);
+}
 
-.hero { padding: 1.5rem 1rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(20,13,8,.9); backdrop-filter: blur(4px); z-index: 5; }
-.hero h1 { margin: 0 0 .4rem; }
-.hero p { margin: 0 0 .6rem; color: #e9ceb0; }
-.hero nav { display: flex; flex-wrap: wrap; gap: .4rem; }
-.hero a { color: var(--accent); text-decoration: none; border: 1px solid var(--border); border-radius: 999px; padding: .2rem .6rem; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(18, 9, 6, 0.92);
+  border-bottom: 1px solid #3a220f;
+  backdrop-filter: blur(8px);
+}
+.topbar-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.brand { font-size: 22px; font-weight: 800; }
+.topbar nav { display: flex; gap: 8px; flex-wrap: wrap; }
+.topbar a {
+  color: var(--gold);
+  text-decoration: none;
+  border: 1px solid #644022;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 14px;
+}
 
-.container { max-width: 1250px; margin: 0 auto; padding: 1rem; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); }
-.panel { background: linear-gradient(180deg, #2a1a10, var(--panel)); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; }
-.panel h2 { margin-top: 0; }
-.muted { color: #d4b494; }
+.page { max-width: 1200px; margin: 20px auto; padding: 0 16px 50px; }
 
-.row { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
-input, select, button, label { padding: .55rem .7rem; border-radius: 8px; border: 1px solid var(--border); background: #21150d; color: var(--text); }
-label { display: inline-flex; align-items: center; gap: .4rem; }
-input, select { min-width: 150px; flex: 1 1 170px; }
+.hero {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #2d180d, #1c0f08);
+  padding: 22px;
+  text-align: center;
+}
+.hero-sub { margin: 0; font-size: 11px; letter-spacing: 2px; color: #c8a684; }
+.hero h1 { margin: 6px 0 14px; font-size: clamp(28px, 4vw, 48px); }
+.prize-box {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid #a3692e;
+  background: linear-gradient(180deg, #3d210f, #27140a);
+  border-radius: 16px;
+  padding: 12px 24px;
+}
+.prize-box span { color: #e3bf97; font-size: 13px; }
+.prize-box strong { font-size: clamp(28px, 4vw, 58px); color: var(--gold); line-height: 1; }
+.hero-row {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+.countdown, .points-box {
+  border: 1px solid #7d5027;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #1f0f07;
+}
+
+.podium {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.podium-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+  background: linear-gradient(180deg, #301909, #1b0f09);
+}
+.podium-card p { margin: 0; color: #cca377; font-size: 12px; }
+.podium-card h3 { margin: 7px 0 6px; font-size: 26px; }
+.podium-card strong { color: var(--gold); font-size: 28px; }
+
+.panel {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #29160c, #190e08);
+  padding: 14px;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.panel-head h2 { margin: 0; font-size: 30px; }
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.table-wrap table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px 8px; border-bottom: 1px solid #4a2d16; text-align: left; }
+
+a { color: var(--gold); }
+input, select, button, label {
+  border: 1px solid #704722;
+  background: #1d0f08;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+input, select { flex: 1; min-width: 120px; }
 button { cursor: pointer; }
-button:hover { border-color: var(--accent); }
+button:hover { border-color: #c18443; }
 button.ghost { background: transparent; }
 
-a { color: var(--accent); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+ul { margin: 6px 0 0; padding-left: 16px; max-height: 220px; overflow: auto; }
+.muted { color: var(--muted); }
 
-ul { margin: .4rem 0 0; padding-left: 1rem; max-height: 220px; overflow: auto; }
-li { margin-bottom: .2rem; }
-
-table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
-th, td { border-bottom: 1px solid #3b2718; padding: .45rem; text-align: left; }
-tbody tr:hover { background: rgba(255,179,71,.08); }
-
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: flex; align-items: center; justify-content: center; z-index: 20; }
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
 .overlay.hidden { display: none; }
-.card { width: min(360px, 90vw); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; background: var(--panel); }
-.actions { display: flex; gap: .5rem; }
+.age-card { text-align: center; width: min(420px, 92vw); }
+.actions { display: flex; gap: 8px; justify-content: center; }
+
+@media (max-width: 960px) {
+  .podium { grid-template-columns: 1fr; }
+  .content-grid { grid-template-columns: 1fr; }
+  .hero-row { grid-template-columns: 1fr; }
+  .panel-head h2 { font-size: 24px; }
+}

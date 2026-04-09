@@ -22,6 +22,29 @@ function setText(id, value) {
   $(id).textContent = value;
 }
 
+function renderPodium(rows) {
+  const top = [rows[0], rows[1], rows[2]];
+  top.forEach((item, idx) => {
+    const card = document.getElementById(`podium${idx + 1}`);
+    if (!card) return;
+    const name = item ? item.masked : '—';
+    const amount = item ? `$${Number(item.wagerAmount || 0).toLocaleString('ru-RU')}` : '$0';
+    card.querySelector('h3').textContent = name;
+    card.querySelector('strong').textContent = amount;
+  });
+}
+
+function renderMonthRange(range) {
+  if (!range) return;
+  const end = new Date(range.endTime * 1000);
+  const now = new Date();
+  const ms = Math.max(0, end.getTime() - now.getTime());
+  const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
+  const m = Math.floor((ms / (1000 * 60)) % 60);
+  document.getElementById('monthRangeOutput').textContent = `До конца гонки: ${d}д ${h}ч ${m}м`;
+}
+
 function canAdmin() {
   return state.permissions.includes('*') || state.permissions.includes('manage_giveaways') || state.permissions.includes('manage_predictions');
 }
@@ -115,6 +138,8 @@ async function refreshPoints() {
   try {
     const data = await api(`/api/points?username=${encodeURIComponent(username)}`);
     setText('pointsOutput', `Баланс ${data.username}: ${data.points}`);
+    const inline = document.getElementById('pointsInline');
+    if (inline) inline.textContent = String(data.points);
   } catch (error) {
     setText('pointsOutput', `Ошибка: ${error.message}`);
   }
@@ -126,6 +151,8 @@ async function loadLeaderboard() {
 
   try {
     const data = await api('/api/leaderboard');
+    renderPodium(data.rows || []);
+    renderMonthRange(data.range);
     body.innerHTML = data.rows.map((row) => `<tr><td>${row.rank}</td><td>${row.masked}</td><td>${row.wagerAmount.toLocaleString('ru-RU')}</td></tr>`).join('') || '<tr><td colspan="3">Нет данных</td></tr>';
   } catch (error) {
     body.innerHTML = `<tr><td colspan="3">Ошибка: ${error.message}</td></tr>`;
