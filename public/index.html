@@ -1,173 +1,26 @@
-<!doctype html>
-<html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AlexCasino — Leaderboard</title>
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <div id="ageGate" class="overlay">
-      <div class="card age-card">
-        <h2>Вам есть 18 лет?</h2>
-        <p>Сайт предназначен только для совершеннолетних пользователей.</p>
-        <div class="actions">
-          <button id="ageYes">Да</button>
-          <button id="ageNo" class="ghost">Нет</button>
-        </div>
-      </div>
+<!doctype html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AlexCasino — Главная</title><link rel="stylesheet" href="/styles.css"></head><body>
+<div id="ageGate" class="overlay"><div class="hero-card age-card"><h2>Вам есть 18 лет?</h2><p>Доступ только для совершеннолетних.</p><div class="actions"><button class="btn primary" id="ageYes">Да</button><button class="btn ghost" id="ageNo">Нет</button></div></div></div>
+<header class="topbar"><div class="topbar-inner"><div class="brand-wrap"><div class="logo-circle">A</div><div class="brand">AlexCasino</div></div><nav class="top-nav"><a class="nav-link active" href="/">Главная</a><a class="nav-link" href="/leaderboard.html">Доска лидеров</a><a class="nav-link" href="/predictions.html">Предикты</a><a class="nav-link" href="/giveaways.html">Розыгрыши</a><a class="nav-link" href="/account.html">Кабинет</a></nav><div class="actions"><a class="btn" id="shopLink" target="_blank" rel="noreferrer">Магазин</a></div></div></header>
+<main class="page">
+<section class="hero">
+  <div class="hero-card">
+    <p class="subtle">Лучшая система наград</p>
+    <h1 class="hero-title">AlexCasino <span class="accent">Community</span></h1>
+    <p class="hero-text">Участвуй в ежемесячной гонке лидеров, предиктах и розыгрышах. Получай награды и бонусы за активность в комьюнити.</p>
+    <div class="counter"><span class="sym">$</span><span id="totalGiven">0</span></div>
+    <div class="row" style="margin-top:12px"><a class="btn primary" href="/leaderboard.html">Открыть leaderboard</a><a class="btn" id="supportLink" target="_blank" rel="noreferrer">Telegram</a></div>
+  </div>
+  <div class="hero-side">
+    <div class="hero-card"><h3 style="margin:0">Прямая трансляция</h3><p class="subtle">Kick стрим интеграция (MVP заглушка)</p><div class="panel" style="margin-top:8px;text-align:center">Здесь будет embed Kick</div></div>
+    <div class="stat-grid">
+      <div class="stat-box"><h4>Пользователей онлайн</h4><p id="onlineNow">0</p></div>
+      <div class="stat-box"><h4>Баланс поинтов</h4><p id="pointsInline">—</p></div>
+      <div class="stat-box"><h4>Активных розыгрышей</h4><p id="activeGiveaways">0</p></div>
+      <div class="stat-box"><h4>Активных предиктов</h4><p id="activePredictions">0</p></div>
     </div>
-
-    <header class="topbar">
-      <div class="topbar-inner">
-        <div class="brand">AlexCasino</div>
-        <nav>
-          <a href="#leaderboard">Leaderboard</a>
-          <a href="#giveaways">Розыгрыши</a>
-          <a href="#predictions">Предикты</a>
-          <a href="#account">Кабинет</a>
-          <a id="shopLink" target="_blank" rel="noreferrer">Магазин</a>
-        </nav>
-      </div>
-    </header>
-
-    <main class="page">
-      <section class="hero">
-        <p class="hero-sub">SHUFFLE LEADERBOARD</p>
-        <h1>🏆 Гонка рефералов 🏆</h1>
-        <div class="prize-box">
-          <span>Призовой фонд</span>
-          <strong>$6 000,00</strong>
-        </div>
-        <div class="hero-row">
-          <div class="countdown" id="monthRangeOutput">До конца гонки: загрузка...</div>
-          <div class="points-box">Баланс поинтов: <strong id="pointsInline">—</strong></div>
-        </div>
-      </section>
-
-      <section class="podium" id="leaderboard">
-        <article class="podium-card" id="podium1">
-          <p>МЕСТО #1</p><h3>—</h3><strong>$0</strong>
-        </article>
-        <article class="podium-card" id="podium2">
-          <p>МЕСТО #2</p><h3>—</h3><strong>$0</strong>
-        </article>
-        <article class="podium-card" id="podium3">
-          <p>МЕСТО #3</p><h3>—</h3><strong>$0</strong>
-        </article>
-      </section>
-
-      <section class="table-wrap panel">
-        <div class="panel-head">
-          <h2>Таблица участников</h2>
-          <button id="reloadLeaderboard">LIVE</button>
-        </div>
-        <table>
-          <thead><tr><th>#</th><th>Игрок</th><th>Ставки ($)</th></tr></thead>
-          <tbody id="leaderboardBody"></tbody>
-        </table>
-      </section>
-
-      <section class="content-grid">
-        <div class="panel" id="giveaways">
-          <div class="panel-head"><h2>Розыгрыши</h2></div>
-          <div class="row admin-only">
-            <input id="gTitle" placeholder="название" />
-            <input id="gCost" type="number" min="0" placeholder="вход (поинты)" />
-            <button id="createGiveaway">Создать</button>
-          </div>
-          <div class="row">
-            <input id="gJoinId" type="number" min="1" placeholder="id" />
-            <button id="joinGiveaway">Участвовать</button>
-            <button id="closeGiveaway" class="ghost admin-only">Закрыть</button>
-          </div>
-          <p id="giveawayOutput"></p>
-          <ul id="giveawayList"></ul>
-        </div>
-
-        <div class="panel" id="predictions">
-          <div class="panel-head"><h2>Предикты бонусханта</h2></div>
-          <div class="row admin-only">
-            <input id="pTitle" placeholder="название" />
-            <button id="createPrediction">Создать</button>
-          </div>
-          <div class="row">
-            <input id="pId" type="number" min="1" placeholder="id" />
-            <input id="pValue" type="number" min="0" placeholder="ваше значение" />
-            <button id="submitPrediction">Отправить</button>
-          </div>
-          <div class="row admin-only">
-            <input id="pCloseId" type="number" min="1" placeholder="id" />
-            <input id="pFinal" type="number" min="0" placeholder="финальное значение" />
-            <button id="closePrediction" class="ghost">Закрыть</button>
-          </div>
-          <p id="predictionOutput"></p>
-          <ul id="predictionList"></ul>
-        </div>
-      </section>
-
-      <section id="account" class="content-grid">
-        <div class="panel">
-          <div class="panel-head"><h2>Вход</h2></div>
-          <div class="row">
-            <select id="provider"><option value="kick">kick</option><option value="telegram">telegram</option></select>
-            <input id="providerId" placeholder="provider id" />
-            <input id="displayName" placeholder="display name" />
-          </div>
-          <div class="row">
-            <button id="loginBtn">Войти</button>
-            <button id="logoutBtn" class="ghost">Выйти</button>
-            <button id="refreshPoints" class="ghost">Обновить баланс</button>
-          </div>
-          <p id="authOutput"></p>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head"><h2>Личный кабинет</h2></div>
-          <div class="row">
-            <input id="kickUsername" placeholder="kick username" />
-            <input id="telegram" placeholder="telegram username" />
-            <input id="shuffleNick" placeholder="shuffle nick" />
-          </div>
-          <div class="row"><button id="saveProfile">Сохранить профиль</button></div>
-          <p id="profileOutput"></p>
-          <p id="statsOutput" class="muted"></p>
-        </div>
-
-        <div class="panel" id="support">
-          <div class="panel-head"><h2>Поддержка</h2></div>
-          <div class="row">
-            <input id="supportMessage" placeholder="Ваш вопрос" />
-            <button id="createTicket">Отправить тикет</button>
-          </div>
-          <p id="supportOutput"></p>
-          <p><a id="supportLink" target="_blank" rel="noreferrer">Telegram support</a></p>
-        </div>
-      </section>
-
-      <section id="admin" class="panel admin-only">
-        <div class="panel-head"><h2>Админка</h2></div>
-        <div class="row">
-          <button id="reloadFlags">Флаги</button>
-          <button id="reloadAudit">Аудит</button>
-          <button id="reloadUsers">Пользователи</button>
-          <button id="reloadTickets">Тикеты</button>
-        </div>
-        <div class="row">
-          <input id="adminUserId" placeholder="user id" />
-          <select id="adminRole"><option value="user">user</option><option value="admin">admin</option><option value="superadmin">superadmin</option></select>
-          <input id="adminPerms" placeholder="custom perms через запятую" />
-          <label><input type="checkbox" id="adminBanned" /> ban</label>
-          <button id="updateUser">Сохранить права</button>
-        </div>
-        <p id="adminOutput"></p>
-        <h3>Флаги</h3><ul id="flagsList"></ul>
-        <h3>Пользователи</h3><ul id="usersList"></ul>
-        <h3>Тикеты</h3><ul id="ticketsList"></ul>
-        <h3>Аудит</h3><ul id="auditList"></ul>
-      </section>
-    </main>
-
-    <script src="/main.js"></script>
-  </body>
-</html>
+  </div>
+</section>
+<footer class="footer">© AlexCasino Community</footer>
+</main>
+<script src="/main.js"></script>
+</body></html>

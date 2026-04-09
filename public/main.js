@@ -1,10 +1,7 @@
-const state = {
-  user: null,
-  permissions: [],
-  config: null,
-};
+const state = { user: null, permissions: [], config: null };
 
 const $ = (id) => document.getElementById(id);
+const has = (id) => Boolean($(id));
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -12,52 +9,42 @@ async function api(path, options = {}) {
     credentials: 'include',
     ...options,
   });
-
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
 
-function setText(id, value) {
-  $(id).textContent = value;
-}
+function setText(id, value) { if (has(id)) $(id).textContent = value; }
+function setHtml(id, value) { if (has(id)) $(id).innerHTML = value; }
 
-function renderPodium(rows) {
-  const top = [rows[0], rows[1], rows[2]];
-  top.forEach((item, idx) => {
-    const card = document.getElementById(`podium${idx + 1}`);
-    if (!card) return;
-    const name = item ? item.masked : '—';
-    const amount = item ? `$${Number(item.wagerAmount || 0).toLocaleString('ru-RU')}` : '$0';
-    card.querySelector('h3').textContent = name;
-    card.querySelector('strong').textContent = amount;
+function renderPodium(rows = []) {
+  ['podium1', 'podium2', 'podium3'].forEach((id, idx) => {
+    if (!has(id)) return;
+    const r = rows[idx];
+    $(id).querySelector('h3').textContent = r ? r.masked : '—';
+    $(id).querySelector('strong').textContent = r ? `$${Number(r.wagerAmount).toLocaleString('ru-RU')}` : '$0';
   });
 }
 
 function renderMonthRange(range) {
-  if (!range) return;
-  const end = new Date(range.endTime * 1000);
-  const now = new Date();
-  const ms = Math.max(0, end.getTime() - now.getTime());
-  const d = Math.floor(ms / (1000 * 60 * 60 * 24));
-  const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
-  const m = Math.floor((ms / (1000 * 60)) % 60);
-  document.getElementById('monthRangeOutput').textContent = `До конца гонки: ${d}д ${h}ч ${m}м`;
+  if (!has('monthRangeOutput') || !range) return;
+  const end = new Date(range.endTime * 1000).getTime();
+  const now = Date.now();
+  const delta = Math.max(0, end - now);
+  const d = Math.floor(delta / (1000 * 60 * 60 * 24));
+  const h = Math.floor((delta / (1000 * 60 * 60)) % 24);
+  const m = Math.floor((delta / (1000 * 60)) % 60);
+  setText('monthRangeOutput', `До конца гонки: ${d}д ${h}ч ${m}м`);
 }
 
 function canAdmin() {
   return state.permissions.includes('*') || state.permissions.includes('manage_giveaways') || state.permissions.includes('manage_predictions');
 }
-
 function canManageUsers() {
   return state.permissions.includes('*') || state.permissions.includes('manage_users');
 }
-
 function updateAdminVisibility() {
-  const visible = canAdmin();
-  document.querySelectorAll('.admin-only').forEach((node) => {
-    node.style.display = visible ? '' : 'none';
-  });
+  document.querySelectorAll('.admin-only').forEach((n) => { n.style.display = canAdmin() ? '' : 'none'; });
 }
 
 function renderAuthInfo(extra = null) {
@@ -73,16 +60,17 @@ function renderAuthInfo(extra = null) {
     setText('statsOutput', `Predictions: ${extra.stats.totalPredictions}, wins: ${extra.stats.wonPredictions}, winRate: ${extra.stats.winRate}`);
   }
 
-  $('kickUsername').value = state.user.kickUsername || '';
-  $('telegram').value = state.user.telegram || '';
-  $('shuffleNick').value = state.user.shuffleNick || '';
+  if (has('kickUsername')) $('kickUsername').value = state.user.kickUsername || '';
+  if (has('telegram')) $('telegram').value = state.user.telegram || '';
+  if (has('shuffleNick')) $('shuffleNick').value = state.user.shuffleNick || '';
+
   updateAdminVisibility();
 }
 
 async function loadConfig() {
   state.config = await api('/api/config');
-  $('shopLink').href = state.config.externalShopUrl;
-  $('supportLink').href = state.config.supportUrl;
+  if (has('shopLink')) $('shopLink').href = state.config.externalShopUrl;
+  if (has('supportLink')) $('supportLink').href = state.config.supportUrl;
 }
 
 async function loadMe() {
@@ -93,12 +81,7 @@ async function loadMe() {
 }
 
 async function login() {
-  const payload = {
-    provider: $('provider').value,
-    providerId: $('providerId').value.trim(),
-    displayName: $('displayName').value.trim(),
-  };
-
+  const payload = { provider: $('provider').value, providerId: $('providerId').value.trim(), displayName: $('displayName').value.trim() };
   await api('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) });
   await loadMe();
   await refreshAll();
@@ -114,16 +97,13 @@ async function logout() {
 
 async function saveProfile() {
   if (!state.user) return setText('profileOutput', 'Сначала авторизуйтесь');
-
   const payload = {
-    kickUsername: $('kickUsername').value.trim(),
-    telegram: $('telegram').value.trim(),
-    shuffleNick: $('shuffleNick').value.trim(),
+    kickUsername: has('kickUsername') ? $('kickUsername').value.trim() : '',
+    telegram: has('telegram') ? $('telegram').value.trim() : '',
+    shuffleNick: has('shuffleNick') ? $('shuffleNick').value.trim() : '',
   };
-
   const data = await api('/api/profile', { method: 'POST', body: JSON.stringify(payload) });
   state.user = data.user;
-
   const flags = (state.user.flags || []).map((x) => x.type).join(', ') || 'нет';
   setText('profileOutput', `Профиль сохранён. complete=${data.profileComplete ? 'да' : 'нет'}. flags=${flags}`);
   renderAuthInfo(data);
@@ -131,37 +111,39 @@ async function saveProfile() {
 
 async function refreshPoints() {
   if (!state.user) return setText('pointsOutput', 'Войдите, чтобы посмотреть баланс.');
-  const username = $('kickUsername').value.trim() || state.user.kickUsername;
+  const username = has('kickUsername') ? $('kickUsername').value.trim() || state.user.kickUsername : state.user.kickUsername;
   if (!username) return setText('pointsOutput', 'Укажите kick username');
 
   setText('pointsOutput', 'Обновляем...');
   try {
     const data = await api(`/api/points?username=${encodeURIComponent(username)}`);
     setText('pointsOutput', `Баланс ${data.username}: ${data.points}`);
-    const inline = document.getElementById('pointsInline');
-    if (inline) inline.textContent = String(data.points);
+    setText('pointsInline', data.points);
   } catch (error) {
     setText('pointsOutput', `Ошибка: ${error.message}`);
   }
 }
 
 async function loadLeaderboard() {
-  const body = $('leaderboardBody');
-  body.innerHTML = '<tr><td colspan="3">Загрузка...</td></tr>';
-
+  if (!has('leaderboardBody')) return;
+  setHtml('leaderboardBody', '<tr><td colspan="3">Загрузка...</td></tr>');
   try {
     const data = await api('/api/leaderboard');
     renderPodium(data.rows || []);
     renderMonthRange(data.range);
-    body.innerHTML = data.rows.map((row) => `<tr><td>${row.rank}</td><td>${row.masked}</td><td>${row.wagerAmount.toLocaleString('ru-RU')}</td></tr>`).join('') || '<tr><td colspan="3">Нет данных</td></tr>';
-  } catch (error) {
-    body.innerHTML = `<tr><td colspan="3">Ошибка: ${error.message}</td></tr>`;
+    setHtml('leaderboardBody', (data.rows || []).map((r) => `<tr><td>${r.rank}</td><td>${r.masked}</td><td>${Number(r.wagerAmount).toLocaleString('ru-RU')}</td></tr>`).join('') || '<tr><td colspan="3">Нет данных</td></tr>');
+  } catch (e) {
+    setHtml('leaderboardBody', `<tr><td colspan="3">Ошибка: ${e.message}</td></tr>`);
   }
 }
 
 async function loadGiveaways() {
+  if (!has('giveawayList')) return;
   const data = await api('/api/giveaways');
-  $('giveawayList').innerHTML = data.rows.map((g) => `<li>#${g.id} ${g.title} | ${g.status} | cost=${g.pointsCost} | users=${g.participants.length}${g.winnerUserId ? ` | winner=${g.winnerUserId}` : ''}</li>`).join('') || '<li>Пусто</li>';
+  const rows = data.rows || [];
+  setHtml('giveawayList', rows.map((g) => `<li>#${g.id} ${g.title} | ${g.status} | cost=${g.pointsCost} | users=${g.participants.length}${g.winnerUserId ? ` | winner=${g.winnerUserId}` : ''}</li>`).join('') || '<li>Пусто</li>');
+  setText('activeGiveaways', rows.filter((r) => r.status === 'active').length);
+  setText('giveawayParticipants', rows.reduce((a, r) => a + (r.participants?.length || 0), 0));
 }
 
 async function createGiveaway() {
@@ -170,15 +152,12 @@ async function createGiveaway() {
   setText('giveawayOutput', `Создан #${data.giveaway.id}`);
   await loadGiveaways();
 }
-
 async function joinGiveaway() {
   const payload = { giveawayId: Number($('gJoinId').value) };
   const data = await api('/api/giveaways/join', { method: 'POST', body: JSON.stringify(payload) });
-  const writeback = data.botrixWriteback?.skipped ? ' (writeback skipped)' : '';
-  setText('giveawayOutput', `Участие подтверждено. Всего=${data.participants}${writeback}`);
+  setText('giveawayOutput', `Участие подтверждено. Всего=${data.participants}`);
   await Promise.all([loadGiveaways(), refreshPoints()]);
 }
-
 async function closeGiveaway() {
   const payload = { giveawayId: Number($('gJoinId').value) };
   const data = await api('/api/giveaways/close', { method: 'POST', body: JSON.stringify(payload) });
@@ -187,143 +166,70 @@ async function closeGiveaway() {
 }
 
 async function loadPredictions() {
+  if (!has('predictionList')) return;
   const data = await api('/api/predictions');
-  $('predictionList').innerHTML = data.rows.map((p) => `<li>#${p.id} ${p.title} | ${p.status} | entries=${p.entries.length}${p.winnerUserId ? ` | winner=${p.winnerUserId}` : ''}</li>`).join('') || '<li>Пусто</li>';
+  const rows = data.rows || [];
+  setHtml('predictionList', rows.map((p) => `<li>#${p.id} ${p.title} | ${p.status} | entries=${p.entries.length}${p.winnerUserId ? ` | winner=${p.winnerUserId}` : ''}</li>`).join('') || '<li>Пусто</li>');
+  setText('activePredictions', rows.filter((r) => r.status === 'active').length);
 }
+async function createPrediction() { const data = await api('/api/predictions', { method: 'POST', body: JSON.stringify({ title: $('pTitle').value.trim() }) }); setText('predictionOutput', `Создан #${data.prediction.id}`); await loadPredictions(); }
+async function submitPrediction() { await api('/api/predictions/submit', { method: 'POST', body: JSON.stringify({ predictionId: Number($('pId').value), value: Number($('pValue').value) }) }); setText('predictionOutput', 'Прогноз отправлен'); await loadPredictions(); }
+async function closePrediction() { const data = await api('/api/predictions/close', { method: 'POST', body: JSON.stringify({ predictionId: Number($('pCloseId').value), finalValue: Number($('pFinal').value) }) }); setText('predictionOutput', `Закрыт. Победитель: ${data.prediction.winnerUserId || 'нет'}`); await loadPredictions(); }
 
-async function createPrediction() {
-  const payload = { title: $('pTitle').value.trim() };
-  const data = await api('/api/predictions', { method: 'POST', body: JSON.stringify(payload) });
-  setText('predictionOutput', `Создан #${data.prediction.id}`);
-  await loadPredictions();
-}
+async function createTicket() { const data = await api('/api/support', { method: 'POST', body: JSON.stringify({ message: $('supportMessage').value.trim() }) }); setText('supportOutput', `Тикет #${data.ticket.id} создан`); $('supportMessage').value = ''; }
 
-async function submitPrediction() {
-  const payload = { predictionId: Number($('pId').value), value: Number($('pValue').value) };
-  await api('/api/predictions/submit', { method: 'POST', body: JSON.stringify(payload) });
-  setText('predictionOutput', 'Прогноз отправлен');
-  await loadPredictions();
-}
-
-async function closePrediction() {
-  const payload = { predictionId: Number($('pCloseId').value), finalValue: Number($('pFinal').value) };
-  const data = await api('/api/predictions/close', { method: 'POST', body: JSON.stringify(payload) });
-  setText('predictionOutput', `Закрыт. Победитель: ${data.prediction.winnerUserId || 'нет'}`);
-  await loadPredictions();
-}
-
-async function createTicket() {
-  const payload = { message: $('supportMessage').value.trim() };
-  const data = await api('/api/support', { method: 'POST', body: JSON.stringify(payload) });
-  setText('supportOutput', `Тикет #${data.ticket.id} создан`);
-  $('supportMessage').value = '';
-}
-
-async function loadFlags() {
-  if (!canAdmin()) return;
-  const data = await api('/api/admin/flags');
-  $('flagsList').innerHTML = data.rows.map((u) => `<li>${u.id}: ${u.flags.map((f) => f.type).join(', ')}</li>`).join('') || '<li>Нет флагов</li>';
-}
-
-async function loadUsers() {
-  if (!canManageUsers()) {
-    $('usersList').innerHTML = '<li>Нет permission manage_users</li>';
-    return;
-  }
-
-  const data = await api('/api/admin/users');
-  $('usersList').innerHTML = data.rows.map((u) => `<li>${u.id} | ${u.role} | banned=${u.banned} | perms=${(u.customPermissions || []).join(',')}</li>`).join('') || '<li>Нет пользователей</li>';
-}
-
-async function updateUser() {
-  if (!canManageUsers()) return setText('adminOutput', 'Нет permission manage_users');
-
-  const payload = {
-    userId: $('adminUserId').value.trim(),
-    role: $('adminRole').value,
-    banned: $('adminBanned').checked,
-    customPermissions: $('adminPerms').value.split(',').map((x) => x.trim()).filter(Boolean),
-  };
-
-  const data = await api('/api/admin/users/update', { method: 'POST', body: JSON.stringify(payload) });
-  setText('adminOutput', `Пользователь ${data.user.id} обновлён`);
-  await loadUsers();
-}
-
-async function loadAudit() {
-  if (!canAdmin()) return;
-  const data = await api('/api/admin/audit');
-  $('auditList').innerHTML = data.rows.map((row) => `<li>${row.at} | ${row.actor} | ${row.action}</li>`).join('') || '<li>Пусто</li>';
-}
-
-async function loadTickets() {
-  if (!canAdmin()) return;
-  const data = await api('/api/support');
-  $('ticketsList').innerHTML = data.rows.map((t) => `<li>#${t.id} ${t.userId}: ${t.message} (${t.status})</li>`).join('') || '<li>Пусто</li>';
-}
+async function loadFlags() { if (!canAdmin() || !has('flagsList')) return; const data = await api('/api/admin/flags'); setHtml('flagsList', data.rows.map((u) => `<li>${u.id}: ${u.flags.map((f) => f.type).join(', ')}</li>`).join('') || '<li>Нет флагов</li>'); }
+async function loadUsers() { if (!has('usersList')) return; if (!canManageUsers()) return setHtml('usersList', '<li>Нет permission manage_users</li>'); const data = await api('/api/admin/users'); setHtml('usersList', data.rows.map((u) => `<li>${u.id} | ${u.role} | banned=${u.banned}</li>`).join('') || '<li>Нет пользователей</li>'); }
+async function updateUser() { if (!canManageUsers()) return setText('adminOutput', 'Нет permission manage_users'); const payload = { userId: $('adminUserId').value.trim(), role: $('adminRole').value, banned: $('adminBanned').checked, customPermissions: $('adminPerms').value.split(',').map((x) => x.trim()).filter(Boolean) }; const data = await api('/api/admin/users/update', { method: 'POST', body: JSON.stringify(payload) }); setText('adminOutput', `Пользователь ${data.user.id} обновлён`); await loadUsers(); }
+async function loadAudit() { if (!canAdmin() || !has('auditList')) return; const data = await api('/api/admin/audit'); setHtml('auditList', data.rows.map((r) => `<li>${r.at} | ${r.actor} | ${r.action}</li>`).join('') || '<li>Пусто</li>'); }
+async function loadTickets() { if (!canAdmin() || !has('ticketsList')) return; const data = await api('/api/support'); setHtml('ticketsList', data.rows.map((t) => `<li>#${t.id} ${t.userId}: ${t.message}</li>`).join('') || '<li>Пусто</li>'); }
 
 async function refreshAll() {
-  await Promise.all([
-    loadLeaderboard(),
-    loadGiveaways(),
-    loadPredictions(),
-    loadFlags().catch(() => {}),
-    loadUsers().catch(() => {}),
-    loadAudit().catch(() => {}),
-    loadTickets().catch(() => {}),
-  ]);
+  await Promise.allSettled([loadLeaderboard(), loadGiveaways(), loadPredictions(), loadFlags(), loadUsers(), loadAudit(), loadTickets(), refreshPoints()]);
+}
+
+function bind(id, event, handler, failTarget) {
+  if (!has(id)) return;
+  $(id).addEventListener(event, () => handler().catch((e) => { if (failTarget) setText(failTarget, e.message); }));
 }
 
 function bindEvents() {
-  $('ageYes').addEventListener('click', () => {
-    localStorage.setItem('ageVerified', '1');
-    $('ageGate').classList.add('hidden');
-  });
+  bind('loginBtn', 'click', login, 'authOutput');
+  bind('logoutBtn', 'click', logout, 'authOutput');
+  bind('saveProfile', 'click', saveProfile, 'profileOutput');
+  bind('refreshPoints', 'click', refreshPoints, 'pointsOutput');
+  bind('reloadLeaderboard', 'click', loadLeaderboard);
 
-  $('ageNo').addEventListener('click', () => {
-    window.location.href = 'https://t.me/casino_alex';
-  });
+  bind('createGiveaway', 'click', createGiveaway, 'giveawayOutput');
+  bind('joinGiveaway', 'click', joinGiveaway, 'giveawayOutput');
+  bind('closeGiveaway', 'click', closeGiveaway, 'giveawayOutput');
 
-  $('loginBtn').addEventListener('click', () => login().catch((e) => setText('authOutput', e.message)));
-  $('logoutBtn').addEventListener('click', () => logout().catch((e) => setText('authOutput', e.message)));
+  bind('createPrediction', 'click', createPrediction, 'predictionOutput');
+  bind('submitPrediction', 'click', submitPrediction, 'predictionOutput');
+  bind('closePrediction', 'click', closePrediction, 'predictionOutput');
 
-  $('saveProfile').addEventListener('click', () => saveProfile().catch((e) => setText('profileOutput', e.message)));
-  $('refreshPoints').addEventListener('click', () => refreshPoints());
-  $('reloadLeaderboard').addEventListener('click', () => loadLeaderboard());
+  bind('createTicket', 'click', createTicket, 'supportOutput');
 
-  $('createGiveaway').addEventListener('click', () => createGiveaway().catch((e) => setText('giveawayOutput', e.message)));
-  $('joinGiveaway').addEventListener('click', () => joinGiveaway().catch((e) => setText('giveawayOutput', e.message)));
-  $('closeGiveaway').addEventListener('click', () => closeGiveaway().catch((e) => setText('giveawayOutput', e.message)));
+  bind('reloadFlags', 'click', loadFlags);
+  bind('reloadAudit', 'click', loadAudit);
+  bind('reloadUsers', 'click', loadUsers);
+  bind('reloadTickets', 'click', loadTickets);
+  bind('updateUser', 'click', updateUser, 'adminOutput');
 
-  $('createPrediction').addEventListener('click', () => createPrediction().catch((e) => setText('predictionOutput', e.message)));
-  $('submitPrediction').addEventListener('click', () => submitPrediction().catch((e) => setText('predictionOutput', e.message)));
-  $('closePrediction').addEventListener('click', () => closePrediction().catch((e) => setText('predictionOutput', e.message)));
-
-  $('createTicket').addEventListener('click', () => createTicket().catch((e) => setText('supportOutput', e.message)));
-
-  $('reloadFlags').addEventListener('click', () => loadFlags().catch((e) => { $('flagsList').innerHTML = `<li>${e.message}</li>`; }));
-  $('reloadAudit').addEventListener('click', () => loadAudit().catch((e) => { $('auditList').innerHTML = `<li>${e.message}</li>`; }));
-  $('reloadUsers').addEventListener('click', () => loadUsers().catch((e) => { $('usersList').innerHTML = `<li>${e.message}</li>`; }));
-  $('reloadTickets').addEventListener('click', () => loadTickets().catch((e) => { $('ticketsList').innerHTML = `<li>${e.message}</li>`; }));
-  $('updateUser').addEventListener('click', () => updateUser().catch((e) => setText('adminOutput', e.message)));
+  if (has('ageYes')) $('ageYes').addEventListener('click', () => { localStorage.setItem('ageVerified', '1'); $('ageGate').classList.add('hidden'); });
+  if (has('ageNo')) $('ageNo').addEventListener('click', () => { window.location.href = 'https://t.me/casino_alex'; });
 }
 
 async function bootstrap() {
   bindEvents();
-
-  if (localStorage.getItem('ageVerified') === '1') {
-    $('ageGate').classList.add('hidden');
-  }
-
+  if (has('ageGate') && localStorage.getItem('ageVerified') === '1') $('ageGate').classList.add('hidden');
   await loadConfig();
   await loadMe();
   await refreshAll();
-
-  setInterval(() => refreshPoints().catch(() => {}), 60 * 1000);
   setInterval(() => loadLeaderboard().catch(() => {}), 60 * 1000);
 }
 
-bootstrap().catch((error) => {
-  console.error(error);
+bootstrap().catch((e) => {
+  console.error(e);
   setText('authOutput', 'Ошибка инициализации');
 });
