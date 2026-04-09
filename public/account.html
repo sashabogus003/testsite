@@ -1,3 +1,70 @@
-<!doctype html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AlexCasino — Кабинет</title><link rel="stylesheet" href="/styles.css"></head><body>
-<header class="topbar"><div class="topbar-inner"><div class="brand-wrap"><div class="logo-circle">A</div><div class="brand">AlexCasino</div></div><nav class="top-nav"><a class="nav-link" href="/">Главная</a><a class="nav-link" href="/leaderboard.html">Доска лидеров</a><a class="nav-link" href="/predictions.html">Предикты</a><a class="nav-link" href="/giveaways.html">Розыгрыши</a><a class="nav-link active" href="/account.html">Кабинет</a></nav><div class="actions"><a class="btn" id="shopLink" target="_blank">Магазин</a></div></div></header>
-<main class="page"><section class="grid-2"><div class="panel"><h2 style="margin-top:0">Авторизация</h2><div class="row"><select id="provider"><option value="kick">kick</option><option value="telegram">telegram</option></select><input id="providerId" placeholder="provider id"><input id="displayName" placeholder="display name"></div><div class="row"><button id="loginBtn" class="btn primary">Войти</button><button id="logoutBtn" class="btn ghost">Выйти</button><button id="refreshPoints" class="btn">Обновить баланс</button></div><p id="authOutput"></p></div><div class="panel"><h2 style="margin-top:0">Профиль</h2><div class="row"><input id="kickUsername" placeholder="kick username"><input id="telegram" placeholder="telegram username"><input id="shuffleNick" placeholder="shuffle nick"></div><div class="row"><button id="saveProfile" class="btn">Сохранить профиль</button></div><p id="profileOutput"></p><p id="statsOutput" class="subtle"></p><p id="pointsOutput">Баланс: —</p></div></section><section class="panel"><h2 style="margin-top:0">Поддержка</h2><div class="row"><textarea id="supportMessage" placeholder="Ваш вопрос"></textarea></div><div class="row"><button id="createTicket" class="btn">Отправить тикет</button><a id="supportLink" class="btn ghost" target="_blank">Telegram support</a></div><p id="supportOutput"></p></section><section id="admin" class="panel admin-only"><h2 style="margin-top:0">Админка</h2><div class="row"><button id="reloadFlags" class="btn">Флаги</button><button id="reloadAudit" class="btn">Аудит</button><button id="reloadUsers" class="btn">Пользователи</button><button id="reloadTickets" class="btn">Тикеты</button></div><div class="row"><input id="adminUserId" placeholder="user id"><select id="adminRole"><option value="user">user</option><option value="admin">admin</option><option value="superadmin">superadmin</option></select><input id="adminPerms" placeholder="custom perms"><label><input type="checkbox" id="adminBanned"> ban</label><button id="updateUser" class="btn ghost">Сохранить</button></div><p id="adminOutput"></p><div class="grid-2"><div><h3>Флаги</h3><ul id="flagsList"></ul><h3>Пользователи</h3><ul id="usersList"></ul></div><div><h3>Тикеты</h3><ul id="ticketsList"></ul><h3>Аудит</h3><ul id="auditList"></ul></div></div></section></main><script src="/main.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AlexCasino — Кабинет</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand-wrap" href="/"><div class="logo-circle">A</div><div><div class="brand">AlexCasino</div><div class="brand-sub">Community Hub</div></div></a>
+      <nav class="top-nav">
+        <a class="nav-link" href="/">Главная</a>
+        <a class="nav-link" href="/leaderboard.html">Лидеры</a>
+        <a class="nav-link" href="/predictions.html">Предикты</a>
+        <a class="nav-link" href="/giveaways.html">Розыгрыши</a>
+        <a class="nav-link active" href="/account.html">Кабинет</a>
+      </nav>
+      <div class="actions"><a class="btn" id="shopLink" target="_blank">Магазин</a></div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="panel" style="margin-bottom: 12px;">
+      <h2 style="margin-top:0">Вход</h2>
+      <p class="subtle">Можно зайти вручную или в один клик через подготовленные кнопки ниже.</p>
+      <div class="row">
+        <button id="quickKickLogin" class="btn primary">Быстрый вход через Kick</button>
+        <button id="quickTelegramLogin" class="btn">Быстрый вход через Telegram</button>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="panel">
+        <h2 style="margin-top:0">Авторизация</h2>
+        <div class="row"><select id="provider"><option value="kick">kick</option><option value="telegram">telegram</option></select><input id="providerId" placeholder="provider id"><input id="displayName" placeholder="display name"></div>
+        <div class="row"><button id="loginBtn" class="btn primary">Войти</button><button id="logoutBtn" class="btn ghost">Выйти</button><button id="refreshPoints" class="btn">Обновить баланс</button></div>
+        <p id="authOutput"></p>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin-top:0">Профиль</h2>
+        <div class="row"><input id="kickUsername" placeholder="kick username"><input id="telegram" placeholder="telegram username"><input id="shuffleNick" placeholder="shuffle nick"></div>
+        <div class="row"><button id="saveProfile" class="btn">Сохранить профиль</button></div>
+        <p id="profileOutput"></p>
+        <p id="statsOutput" class="subtle"></p>
+        <p id="pointsOutput">Баланс: —</p>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 12px;">
+      <h2 style="margin-top:0">Поддержка</h2>
+      <div class="row"><textarea id="supportMessage" placeholder="Опишите вопрос"></textarea></div>
+      <div class="row"><button id="createTicket" class="btn">Отправить тикет</button><a id="supportLink" class="btn ghost" target="_blank">Telegram support</a></div>
+      <p id="supportOutput"></p>
+    </section>
+
+    <section id="admin" class="panel admin-only" style="margin-top: 12px;">
+      <h2 style="margin-top:0">Админка</h2>
+      <div class="row"><button id="reloadFlags" class="btn">Флаги</button><button id="reloadAudit" class="btn">Аудит</button><button id="reloadUsers" class="btn">Пользователи</button><button id="reloadTickets" class="btn">Тикеты</button></div>
+      <div class="row"><input id="adminUserId" placeholder="user id"><select id="adminRole"><option value="user">user</option><option value="admin">admin</option><option value="superadmin">superadmin</option></select><input id="adminPerms" placeholder="custom perms"><label><input type="checkbox" id="adminBanned"> ban</label><button id="updateUser" class="btn ghost">Сохранить</button></div>
+      <p id="adminOutput"></p>
+      <div class="grid-2"><div><h3>Флаги</h3><ul id="flagsList"></ul><h3>Пользователи</h3><ul id="usersList"></ul></div><div><h3>Тикеты</h3><ul id="ticketsList"></ul><h3>Аудит</h3><ul id="auditList"></ul></div></div>
+    </section>
+  </main>
+
+  <script src="/main.js"></script>
+</body>
+</html>

@@ -9,8 +9,15 @@ async function api(path, options = {}) {
     credentials: 'include',
     ...options,
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Request failed');
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
   return data;
 }
 
@@ -71,17 +78,49 @@ async function loadConfig() {
   state.config = await api('/api/config');
   if (has('shopLink')) $('shopLink').href = state.config.externalShopUrl;
   if (has('supportLink')) $('supportLink').href = state.config.supportUrl;
+  if (has('supportLink2')) $('supportLink2').href = state.config.supportUrl;
 }
 
 async function loadMe() {
-  const data = await api('/api/auth/me');
-  state.user = data.user;
-  state.permissions = data.permissions || [];
-  renderAuthInfo(data);
+  try {
+    const data = await api('/api/auth/me');
+    state.user = data.user;
+    state.permissions = data.permissions || [];
+    renderAuthInfo(data);
+    return data;
+  } catch (error) {
+    if (String(error.message).includes('401') || /unauthorized/i.test(error.message)) {
+      state.user = null;
+      state.permissions = [];
+      renderAuthInfo();
+      return null;
+    }
+    throw error;
+  }
+}
+
+function prefillProviderFromQuery() {
+  if (!has('provider')) return;
+  const params = new URLSearchParams(window.location.search);
+  const provider = params.get('provider');
+  if (provider && ['kick', 'telegram'].includes(provider)) $('provider').value = provider;
+}
+
+async function quickLogin(provider) {
+  if (!has('providerId') || !has('displayName')) return;
+  $('provider').value = provider;
+  const random = Math.floor(Math.random() * 1_000_000);
+  $('providerId').value = `${provider}_${random}`;
+  $('displayName').value = provider === 'kick' ? `KickUser${random}` : `TelegramUser${random}`;
+  await login();
 }
 
 async function login() {
-  const payload = { provider: $('provider').value, providerId: $('providerId').value.trim(), displayName: $('displayName').value.trim() };
+  const payload = {
+    provider: $('provider').value,
+    providerId: $('providerId').value.trim(),
+    displayName: $('displayName').value.trim(),
+  };
   await api('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) });
   await loadMe();
   await refreshAll();
@@ -93,6 +132,7 @@ async function logout() {
   state.permissions = [];
   renderAuthInfo();
   setText('pointsOutput', 'Войдите, чтобы посмотреть баланс.');
+  setText('pointsInline', '—');
 }
 
 async function saveProfile() {
@@ -112,7 +152,7 @@ async function saveProfile() {
 async function refreshPoints() {
   if (!state.user) return setText('pointsOutput', 'Войдите, чтобы посмотреть баланс.');
   const username = has('kickUsername') ? $('kickUsername').value.trim() || state.user.kickUsername : state.user.kickUsername;
-  if (!username) return setText('pointsOutput', 'Укажите kick username');
+  if (!username) return setText('pointsOutput', 'Укажите kick username в профиле');
 
   setText('pointsOutput', 'Обновляем...');
   try {
@@ -141,7 +181,7 @@ async function loadGiveaways() {
   if (!has('giveawayList')) return;
   const data = await api('/api/giveaways');
   const rows = data.rows || [];
-  setHtml('giveawayList', rows.map((g) => `<li>#${g.id} ${g.title} | ${g.status} | cost=${g.pointsCost} | users=${g.participants.length}${g.winnerUserId ? ` | winner=${g.winnerUserId}` : ''}</li>`).join('') || '<li>Пусто</li>');
+  setHtml('giveawayList', rows.map((g) => `<li><strong>#${g.id}</strong> ${g.title} • ${g.status} • вход: ${g.pointsCost} • участников: ${g.participants.length}${g.winnerUserId ? ` • победитель=${g.winnerUserId}` : ''}</li>`).join('') || '<li>Пока нет розыгрышей</li>');
   setText('activeGiveaways', rows.filter((r) => r.status === 'active').length);
   setText('giveawayParticipants', rows.reduce((a, r) => a + (r.participants?.length || 0), 0));
 }
@@ -149,7 +189,7 @@ async function loadGiveaways() {
 async function createGiveaway() {
   const payload = { title: $('gTitle').value.trim(), pointsCost: Number($('gCost').value || 0) };
   const data = await api('/api/giveaways', { method: 'POST', body: JSON.stringify(payload) });
-  setText('giveawayOutput', `Создан #${data.giveaway.id}`);
+  setText('giveawayOutput', `Создан розыгрыш #${data.giveaway.id}`);
   await loadGiveaways();
 }
 async function joinGiveaway() {
@@ -169,14 +209,20 @@ async function loadPredictions() {
   if (!has('predictionList')) return;
   const data = await api('/api/predictions');
   const rows = data.rows || [];
-  setHtml('predictionList', rows.map((p) => `<li>#${p.id} ${p.title} | ${p.status} | entries=${p.entries.length}${p.winnerUserId ? ` | winner=${p.winnerUserId}` : ''}</li>`).join('') || '<li>Пусто</li>');
+  setHtml('predictionList', rows.map((p) => `<li><strong>#${p.id}</strong> ${p.title} • ${p.status} • прогнозов: ${p.entries.length}${p.winnerUserId ? ` • победитель=${p.winnerUserId}` : ''}</li>`).join('') || '<li>Пока нет активностей</li>');
   setText('activePredictions', rows.filter((r) => r.status === 'active').length);
 }
 async function createPrediction() { const data = await api('/api/predictions', { method: 'POST', body: JSON.stringify({ title: $('pTitle').value.trim() }) }); setText('predictionOutput', `Создан #${data.prediction.id}`); await loadPredictions(); }
 async function submitPrediction() { await api('/api/predictions/submit', { method: 'POST', body: JSON.stringify({ predictionId: Number($('pId').value), value: Number($('pValue').value) }) }); setText('predictionOutput', 'Прогноз отправлен'); await loadPredictions(); }
 async function closePrediction() { const data = await api('/api/predictions/close', { method: 'POST', body: JSON.stringify({ predictionId: Number($('pCloseId').value), finalValue: Number($('pFinal').value) }) }); setText('predictionOutput', `Закрыт. Победитель: ${data.prediction.winnerUserId || 'нет'}`); await loadPredictions(); }
 
-async function createTicket() { const data = await api('/api/support', { method: 'POST', body: JSON.stringify({ message: $('supportMessage').value.trim() }) }); setText('supportOutput', `Тикет #${data.ticket.id} создан`); $('supportMessage').value = ''; }
+async function createTicket() {
+  const message = $('supportMessage').value.trim();
+  if (!message) return setText('supportOutput', 'Введите текст обращения');
+  const data = await api('/api/support', { method: 'POST', body: JSON.stringify({ message }) });
+  setText('supportOutput', `Тикет #${data.ticket.id} создан`);
+  $('supportMessage').value = '';
+}
 
 async function loadFlags() { if (!canAdmin() || !has('flagsList')) return; const data = await api('/api/admin/flags'); setHtml('flagsList', data.rows.map((u) => `<li>${u.id}: ${u.flags.map((f) => f.type).join(', ')}</li>`).join('') || '<li>Нет флагов</li>'); }
 async function loadUsers() { if (!has('usersList')) return; if (!canManageUsers()) return setHtml('usersList', '<li>Нет permission manage_users</li>'); const data = await api('/api/admin/users'); setHtml('usersList', data.rows.map((u) => `<li>${u.id} | ${u.role} | banned=${u.banned}</li>`).join('') || '<li>Нет пользователей</li>'); }
@@ -200,6 +246,9 @@ function bindEvents() {
   bind('refreshPoints', 'click', refreshPoints, 'pointsOutput');
   bind('reloadLeaderboard', 'click', loadLeaderboard);
 
+  bind('quickKickLogin', 'click', () => quickLogin('kick'), 'authOutput');
+  bind('quickTelegramLogin', 'click', () => quickLogin('telegram'), 'authOutput');
+
   bind('createGiveaway', 'click', createGiveaway, 'giveawayOutput');
   bind('joinGiveaway', 'click', joinGiveaway, 'giveawayOutput');
   bind('closeGiveaway', 'click', closeGiveaway, 'giveawayOutput');
@@ -222,6 +271,7 @@ function bindEvents() {
 
 async function bootstrap() {
   bindEvents();
+  prefillProviderFromQuery();
   if (has('ageGate') && localStorage.getItem('ageVerified') === '1') $('ageGate').classList.add('hidden');
   await loadConfig();
   await loadMe();
