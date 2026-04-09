@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlexCasino — Final MVP</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="ageGate" class="overlay">
+      <div class="card">
+        <h2>Вам есть 18 лет?</h2>
+        <div class="actions">
+          <button id="ageYes">Да</button>
+          <button id="ageNo" class="ghost">Нет</button>
+        </div>
+      </div>
+    </div>
+
+    <header class="hero">
+      <h1>AlexCasino Community</h1>
+      <p>Полная тестовая версия: auth, профиль, поинты, лидерборд, розыгрыши, предикты, поддержка, админка.</p>
+      <nav>
+        <a href="#auth">Auth</a><a href="#profile">Профиль</a><a href="#points">Points</a>
+        <a href="#leaderboard">Leaderboard</a><a href="#giveaways">Розыгрыши</a><a href="#predictions">Предикты</a>
+        <a href="#support">Support</a><a href="#admin">Admin</a>
+        <a id="shopLink" target="_blank" rel="noreferrer">Магазин</a>
+      </nav>
+    </header>
+
+    <main class="container">
+      <section id="auth" class="panel">
+        <h2>Авторизация</h2>
+        <p class="muted">MVP-режим для теста: вход по provider + providerId.</p>
+        <div class="row">
+          <select id="provider"><option value="kick">kick</option><option value="telegram">telegram</option></select>
+          <input id="providerId" placeholder="provider id" />
+          <input id="displayName" placeholder="display name" />
+          <button id="loginBtn">Войти</button>
+          <button id="logoutBtn" class="ghost">Выйти</button>
+        </div>
+        <p id="authOutput"></p>
+      </section>
+
+      <section id="profile" class="panel">
+        <h2>Личный кабинет</h2>
+        <div class="row">
+          <input id="kickUsername" placeholder="kick username" />
+          <input id="telegram" placeholder="telegram username" />
+          <input id="shuffleNick" placeholder="shuffle nick" />
+          <button id="saveProfile">Сохранить профиль</button>
+        </div>
+        <p id="profileOutput"></p>
+        <p id="statsOutput" class="muted"></p>
+      </section>
+
+      <section id="points" class="panel">
+        <h2>Баланс поинтов (Botrix)</h2>
+        <button id="refreshPoints">Обновить баланс</button>
+        <p id="pointsOutput">Войдите, чтобы посмотреть баланс.</p>
+      </section>
+
+      <section id="leaderboard" class="panel">
+        <h2>Leaderboard (Shuffle / Москва / месяц)</h2>
+        <button id="reloadLeaderboard">Обновить leaderboard</button>
+        <table><thead><tr><th>#</th><th>Игрок</th><th>Wager ($)</th></tr></thead><tbody id="leaderboardBody"></tbody></table>
+      </section>
+
+      <section id="giveaways" class="panel">
+        <h2>Розыгрыши</h2>
+        <div class="row admin-only">
+          <input id="gTitle" placeholder="название" />
+          <input id="gCost" type="number" min="0" placeholder="стоимость входа" />
+          <button id="createGiveaway">Создать</button>
+        </div>
+        <div class="row">
+          <input id="gJoinId" type="number" min="1" placeholder="id" />
+          <button id="joinGiveaway">Участвовать</button>
+          <button id="closeGiveaway" class="ghost admin-only">Закрыть</button>
+        </div>
+        <p id="giveawayOutput"></p>
+        <ul id="giveawayList"></ul>
+      </section>
+
+      <section id="predictions" class="panel">
+        <h2>Предикты</h2>
+        <div class="row admin-only">
+          <input id="pTitle" placeholder="название" />
+          <button id="createPrediction">Создать</button>
+        </div>
+        <div class="row">
+          <input id="pId" type="number" min="1" placeholder="id" />
+          <input id="pValue" type="number" min="0" placeholder="ваше значение" />
+          <button id="submitPrediction">Отправить</button>
+        </div>
+        <div class="row admin-only">
+          <input id="pCloseId" type="number" min="1" placeholder="id" />
+          <input id="pFinal" type="number" min="0" placeholder="финальное значение" />
+          <button id="closePrediction" class="ghost">Закрыть</button>
+        </div>
+        <p id="predictionOutput"></p>
+        <ul id="predictionList"></ul>
+      </section>
+
+      <section id="support" class="panel">
+        <h2>Поддержка</h2>
+        <div class="row">
+          <input id="supportMessage" placeholder="Ваш вопрос" />
+          <button id="createTicket">Отправить тикет</button>
+        </div>
+        <p id="supportOutput"></p>
+        <p><a id="supportLink" target="_blank" rel="noreferrer">Telegram support</a></p>
+      </section>
+
+      <section id="admin" class="panel admin-only">
+        <h2>Админка</h2>
+        <div class="row">
+          <button id="reloadFlags">Флаги</button>
+          <button id="reloadAudit">Аудит</button>
+          <button id="reloadUsers">Пользователи</button>
+          <button id="reloadTickets">Тикеты</button>
+        </div>
+
+        <h3>Управление пользователем</h3>
+        <div class="row">
+          <input id="adminUserId" placeholder="user id" />
+          <select id="adminRole"><option value="user">user</option><option value="admin">admin</option><option value="superadmin">superadmin</option></select>
+          <input id="adminPerms" placeholder="custom perms через запятую" />
+          <label><input type="checkbox" id="adminBanned" /> ban</label>
+          <button id="updateUser">Сохранить права</button>
+        </div>
+        <p id="adminOutput"></p>
+
+        <h3>Флаги</h3><ul id="flagsList"></ul>
+        <h3>Пользователи</h3><ul id="usersList"></ul>
+        <h3>Тикеты</h3><ul id="ticketsList"></ul>
+        <h3>Аудит</h3><ul id="auditList"></ul>
+      </section>
+    </main>
+
+    <script src="/main.js"></script>
+  </body>
+</html>
